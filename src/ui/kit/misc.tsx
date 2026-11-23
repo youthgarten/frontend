@@ -7,7 +7,7 @@ import { levelInfo } from '../../character';
 export function ProgressBar({ value, tone = 'sun', mark, label, className = '' }: {
     value: number;
     tone?: 'sun' | 'ok' | 'uniform' | 'danger';
-    /** 0~1. 기준선을 세로 줄로 표시한다 (수강 완료 80%, 통과 80점) */
+    /** 0~1. 기준선을 세로 줄로 표시한다 (수강 완료 80%, 예전 채점 기준의 통과 80점) */
     mark?: number;
     /** 화면 낭독기용 설명 */
     label?: string;

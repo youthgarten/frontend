@@ -37,12 +37,12 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
             ),
         },
         {
-            title: '강의장에서 강의 듣기',
+            title: '강의실에서 강의 듣기',
             art: <LectureArt userId={me.id} level={me.level} />,
             body: (
                 <>
                     <p>
-                        강의장 칠판 앞이나 자리에서 <Kbd>F</Kbd>를 누르면 강의 목록이 열려요.
+                        강의실 칠판 앞이나 자리에서 <Kbd>F</Kbd>를 누르면 강의 목록이 열려요.
                         영상에서 <b>실제로 본 부분이 80% 이상</b>이면 수강 완료예요.
                     </p>
                     <p className="mt-3 text-ink-soft">건너뛴 부분은 들어가지 않아요. 중간에 나가도 다음에 이어서 볼 수 있어요.</p>
@@ -56,7 +56,7 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
                 <>
                     <p>
                         시험장의 AI 시험관에게 말을 걸면 실무 과제를 받아요. 과제는 화면 안의 AI와 함께 풀어요.
-                        <b> 80점 이상이면 통과</b>! 레벨이 오르고 모자 색이 바뀌어요.
+                        <b> 실무 과제 해결과 AI 활용 역량, 두 영역을 모두 충족하면 통과</b>! 레벨이 오르고 모자 색이 바뀌어요.
                     </p>
                     <p className="mt-3 text-ink-soft">과제마다 먼저 들어야 하는 강의가 하나씩 있어요. 그 강의를 다 들으면 시험을 볼 수 있어요.</p>
                 </>

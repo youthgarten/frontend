@@ -158,7 +158,7 @@ function NextStepCard() {
                 <>
                     <StepTitle tag="강의 듣기" order={step.order} total={step.total}>{step.task.required_lecture.title}</StepTitle>
                     <p className="mt-1.5 text-[14px] leading-snug text-ink-soft">
-                        {place === 'classroom' ? '위쪽 칠판' : '강의장 칠판'} 앞이나 자리에서 <Kbd>F</Kbd>를 눌러 들어요. 다 들으면 이 과제의 시험을 볼 수 있어요.
+                        {place === 'classroom' ? '위쪽 칠판' : '강의실 칠판'} 앞이나 자리에서 <Kbd>F</Kbd>를 눌러 들어요. 다 들으면 이 과제의 시험을 볼 수 있어요.
                     </p>
                     {place !== 'classroom' && (
                         <Button
@@ -170,7 +170,7 @@ function NextStepCard() {
                                 emit('goto', 'classroom');
                             }}
                         >
-                            강의장으로 이동
+                            강의실로 이동
                         </Button>
                     )}
                 </>
@@ -181,7 +181,7 @@ function NextStepCard() {
                 <>
                     <StepTitle tag="시험 보기" order={step.order} total={step.total}>{step.task.title}</StepTitle>
                     <p className="mt-1.5 text-[14px] leading-snug text-ink-soft">
-                        {place === 'exam' ? '위쪽' : '시험장'}의 AI 시험관 앞이나 자리에서 <Kbd>F</Kbd>를 눌러요. 80점 이상이면 레벨이 올라요.
+                        {place === 'exam' ? '위쪽' : '시험장'}의 AI 시험관 앞이나 자리에서 <Kbd>F</Kbd>를 눌러요. 통과하면 레벨이 올라요.
                     </p>
                     {place !== 'exam' && (
                         <Button
