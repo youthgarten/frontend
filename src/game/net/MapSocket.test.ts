@@ -95,8 +95,16 @@ beforeEach(() => {
 afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     vi.resetAllMocks();
+});
+
+it('connects from the Vercel frontend to the configured public backend over WSS', () => {
+    vi.stubEnv('VITE_PUBLIC_BACKEND_ORIGIN', 'https://api.example.com/');
+    const { socket, ws } = connected();
+    expect(ws.url).toBe('wss://api.example.com/api/v1/ws/map');
+    socket.stop();
 });
 
 describe('MapSocket 연결과 인증', () => {

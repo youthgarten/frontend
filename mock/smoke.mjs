@@ -224,7 +224,7 @@ async function main() {
     const dash = await call('GET', '/lectures', { token });
     check('강의 대시보드 5개, 완료 0', dash.status === 200 && dash.body?.total_count === 5 && dash.body?.completed_count === 0 && dash.body?.lectures?.length === 5, dash.body);
     const l1 = await call('GET', '/lectures/1', { token });
-    check('강의 1 상세 (youtube_video_id, last_position_sec, task_id)', l1.status === 200 && l1.body?.task_id === 1 && l1.body?.youtube_video_id === 'aqz-KE-bpKQ' && l1.body?.last_position_sec === 0, l1.body);
+    check('강의 1 상세 (youtube_video_id, last_position_sec, task_id)', l1.status === 200 && l1.body?.task_id === 1 && l1.body?.youtube_video_id === 'c9pBqlOSnx4' && l1.body?.last_position_sec === 0, l1.body);
     const l2 = await call('GET', '/lectures/2', { token });
     check('강의 2는 mock: 영상', l2.status === 200 && /^mock:/.test(l2.body?.youtube_video_id ?? ''), l2.body);
     const l99 = await call('GET', '/lectures/99', { token });

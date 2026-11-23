@@ -245,6 +245,7 @@ export async function createYouTubePlayer(
     start: number,
     /** 다 만들어지기 전에 화면이 사라지면 abort해서 만들던 플레이어를 치운다 */
     signal: AbortSignal,
+    onPlaybackError?: () => void,
 ): Promise<LecturePlayer> {
     const YT = await loadYouTubeApi();
     if (signal.aborted) throw new Error('ABORTED');
@@ -282,7 +283,10 @@ export async function createYouTubePlayer(
                     for (const fn of [...listeners]) fn(state);
                 },
                 onError: () => {
-                    if (ready) return;
+                    if (ready) {
+                        if (!destroyed) onPlaybackError?.();
+                        return;
+                    }
                     window.clearTimeout(readyTimer);
                     reject(new Error('YOUTUBE_VIDEO_ERROR'));
                 },

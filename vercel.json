@@ -1,0 +1,15 @@
+{
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": "https://desktop-mr7iih9.tailf39937.ts.net/api/v1/:path*" },
+    { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/v1/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "CDN-Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}
