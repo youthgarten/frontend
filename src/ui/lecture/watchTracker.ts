@@ -59,6 +59,11 @@ export class WatchTracker {
         this.closeSegment();
     }
 
+    /** 이동 이벤트의 재생 위치는 이미 바뀌었으므로 마지막 시청 지점에서 닫는다. */
+    interrupt() {
+        this.closeSegment();
+    }
+
     /** 아직 보내지 못한 구간이 있는가 */
     hasUnsent() {
         return this.closed.length > 0 || (this.segStart !== null && this.segLast > this.segStart);

@@ -44,3 +44,7 @@ docs/        계획, 의도, 판단 기록, ADR
 
 - `main`에 직접 올리지 않는다.
 - 각자 브랜치를 만들어 작업하고, MR(PR)로 올려 확인받은 뒤 합친다.
+
+## 로컬 강의 영상
+
+카탈로그의 `local:trade-delay-v1`은 `public/lecture-media/trade-delay-v1.mp4`에 있는 강의 파일을 사용합니다. Vite 개발 서버와 배포 빌드에서 같은 출처의 `/lecture-media/trade-delay-v1.mp4`로 재생합니다.

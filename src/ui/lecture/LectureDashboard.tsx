@@ -103,7 +103,7 @@ function LectureRow({ lecture, order, recommended, taskTitles, onOpen }: {
                     <p className="mt-1.5 text-[14px] leading-snug text-ink-soft">
                         {lecture.completed
                             ? `${taskText} 시험을 볼 수 있어요.`
-                            : `이 강의를 다 들으면 ${taskText} 시험을 볼 수 있어요.`}
+                            : `이 강의의 80% 이상을 시청하면 ${taskText} 시험을 볼 수 있어요.`}
                     </p>
                 )}
             </div>

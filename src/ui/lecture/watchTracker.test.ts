@@ -38,6 +38,15 @@ describe('WatchTracker', () => {
         expect(sent[0].watched_ranges).toEqual([[0, 3], [200, 203]]);
     });
 
+    it('명시적인 이동은 두 초 이내라도 수강 구간에서 제외한다', async () => {
+        const { tracker, sent } = setup();
+        const wall = play(tracker, 0, 3);
+        tracker.interrupt();
+        play(tracker, 5, 3, wall + 500);
+        await tracker.report(8);
+        expect(sent[0].watched_ranges).toEqual([[0, 3], [5, 8]]);
+    });
+
     it('뒤로 되감아 다시 본 구간은 서버가 합치도록 겹친 채로 하나로 보낸다', async () => {
         const { tracker, sent } = setup();
         const wall = play(tracker, 0, 10);
