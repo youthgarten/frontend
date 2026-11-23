@@ -7,7 +7,7 @@ import { MockPanel } from './ui/dev/MockPanel';
 import { ExamFlow } from './ui/exam/ExamFlow';
 import { Hud } from './ui/hud/Hud';
 import { Tutorial } from './ui/hud/Tutorial';
-import { Loading } from './ui/kit';
+import { Loading, Notice } from './ui/kit';
 import { LectureOverlay } from './ui/lecture/LectureOverlay';
 import { LevelUpOverlay } from './ui/levelup/LevelUpOverlay';
 
@@ -22,6 +22,20 @@ export default function App() {
 }
 
 function Root() {
+    const { connectionUnstable } = useSession();
+    return (
+        <>
+            <Screen />
+            {connectionUnstable && (
+                <div className="pointer-events-none fixed inset-x-0 top-4 z-[70] flex justify-center px-4">
+                    <Notice tone="warn" className="px-box-flat font-pixel">연결이 불안정해요. 다시 연결하는 중이에요.</Notice>
+                </div>
+            )}
+        </>
+    );
+}
+
+function Screen() {
     const { status } = useSession();
     if (status === 'booting') {
         return (

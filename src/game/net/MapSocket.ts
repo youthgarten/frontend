@@ -1,4 +1,4 @@
-import { getAccessToken, notifySessionLost, refreshAccessToken } from '../../api';
+import { getAccessToken, isConnectionUnstable, notifySessionLost, refreshAccessToken } from '../../api';
 import type { Dir, MapClientMessage, MapPlayer, MapServerMessage } from '../../api';
 import { emit } from '../../events';
 
@@ -132,7 +132,9 @@ export class MapSocket {
             try {
                 token = await refreshAccessToken();
             } catch {
-                this.giveUp('액세스 토큰이 없고 재발급도 실패했다');
+                // 연결이 불안정해서 실패한 것이면 로그인은 유지되므로 멈추지 않고 다시 시도한다
+                if (isConnectionUnstable()) this.scheduleRetry();
+                else this.giveUp('액세스 토큰이 없고 재발급도 실패했다');
                 return;
             }
             if (this.stopped) return;
@@ -217,7 +219,11 @@ export class MapSocket {
             emit('map-connection', 'reconnecting');
             refreshAccessToken()
                 .then(() => this.connect())
-                .catch(() => this.giveUp('토큰 재발급에 실패했다 (4401)'));
+                .catch(() => {
+                    if (!isConnectionUnstable()) return this.giveUp('토큰 재발급에 실패했다 (4401)');
+                    this.authRetried = false;
+                    this.scheduleRetry();
+                });
             return;
         }
         this.scheduleRetry();

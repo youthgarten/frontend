@@ -11,7 +11,7 @@ export { ApiError, errorMessage, isAborted, isApiError } from './core/errors';
 
 // HTTP 클라이언트와 로그인 상태
 export {
-    API_BASE, getAccessToken, http, notifySessionLost, refreshAccessToken, request, setAccessToken, setSessionLostHandler,
+    API_BASE, getAccessToken, http, isConnectionUnstable, notifySessionLost, refreshAccessToken, request, setAccessToken, setConnectionUnstableHandler, setSessionLostHandler,
 } from './client';
 export type { RequestOptions } from './client';
 

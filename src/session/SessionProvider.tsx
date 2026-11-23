@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-    api, invalidateLectureProgress, refreshAccessToken, setAccessToken, setSessionLostHandler, useLectures, userQueries, useTasks,
+    api, getAccessToken, invalidateLectureProgress, isConnectionUnstable, refreshAccessToken, setAccessToken,
+    setConnectionUnstableHandler, setSessionLostHandler, useLectures, userQueries, useTasks,
     type LectureDashboard, type Me, type TaskSummary,
 } from '../api';
 
@@ -18,6 +19,8 @@ interface Session {
     lectures: LectureDashboard | null;
     /** 과제 목록. 아직 못 불렀으면 null */
     tasks: TaskSummary[] | null;
+    /** 토큰 재발급이 통신 문제로 실패해 다시 시도하는 중. 로그인은 그대로 둔다 */
+    connectionUnstable: boolean;
     login: (loginId: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     /** 내 정보를 다시 불러온다 (레벨업 뒤, 첫 입장 안내를 본 뒤) */
@@ -45,6 +48,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const queryClient = useQueryClient();
     const [status, setStatus] = useState<Status>('booting');
     const [me, setMe] = useState<Me | null>(null);
+    const [connectionUnstable, setConnectionUnstable] = useState(isConnectionUnstable);
 
     // 로그인한 동안에만 부른다. 한쪽이 실패해도 다른 쪽은 보여 준다
     const authed = status === 'authed';
@@ -83,19 +87,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let cancelled = false;
         setSessionLostHandler(clear);
+        setConnectionUnstableHandler(setConnectionUnstable);
         (async () => {
             try {
                 await refreshAccessToken();
                 if (!cancelled) await enter();
             } catch {
-                if (!cancelled) clear();
+                // 통신 문제면 로그인 화면으로 보내지 않고 기다린다. 다시 시도가 성공하면 아래 효과가 들여보낸다
+                if (!cancelled && !isConnectionUnstable()) clear();
             }
         })();
         return () => {
             cancelled = true;
             setSessionLostHandler(null);
+            setConnectionUnstableHandler(null);
         };
     }, [clear, enter]);
+
+    // 앱 시작 때 통신 문제로 복구하지 못했다가 다시 시도가 성공한 경우
+    useEffect(() => {
+        if (status === 'booting' && !connectionUnstable && getAccessToken()) enter().catch(clear);
+    }, [status, connectionUnstable, enter, clear]);
 
     const login = useCallback(async (loginId: string, password: string) => {
         const token = await api.login({ login_id: loginId, password });
@@ -113,8 +125,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }, [clear]);
 
     const value = useMemo<Session>(
-        () => ({ status, me, lectures, tasks, login, logout, reloadMe, reloadProgress }),
-        [status, me, lectures, tasks, login, logout, reloadMe, reloadProgress],
+        () => ({ status, me, lectures, tasks, connectionUnstable, login, logout, reloadMe, reloadProgress }),
+        [status, me, lectures, tasks, connectionUnstable, login, logout, reloadMe, reloadProgress],
     );
     return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
