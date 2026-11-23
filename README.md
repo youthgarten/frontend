@@ -25,7 +25,7 @@ Node 20 이상이 필요하다.
 
 ## Vercel 배포의 백엔드 연결
 
-Vercel 프로젝트의 Production 환경 변수 `VITE_PUBLIC_BACKEND_ORIGIN`에 공개 백엔드의 HTTPS 출처를 넣고 다시 배포한다. 값에는 `/api/v1` 경로를 붙이지 않는다. `vercel.ts`가 REST 요청을 백엔드로 전달해 브라우저의 세션 쿠키는 같은 출처를 사용한다. Phaser WebSocket은 같은 공개 주소의 `wss://`에 직접 접속하므로 백엔드 `WS_ALLOWED_ORIGINS`에 `https://youthgarten.vercel.app`을 넣는다.
+Vercel 프로젝트의 Production 환경 변수 `VITE_PUBLIC_BACKEND_ORIGIN`에 공개 백엔드의 HTTPS 출처를 넣고 다시 배포한다. 값에는 `/api/v1` 경로를 붙이지 않는다. `vercel.json`이 REST 요청을 백엔드로 전달해(주소가 바뀌면 이 파일도 고친다) 브라우저의 세션 쿠키는 같은 출처를 사용한다. Phaser WebSocket은 같은 공개 주소의 `wss://`에 직접 접속하므로 백엔드 `WS_ALLOWED_ORIGINS`에 `https://youthgarten.vercel.app`을 넣는다.
 
 ## 폴더 구조
 
