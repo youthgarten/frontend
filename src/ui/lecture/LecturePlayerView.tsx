@@ -7,7 +7,7 @@ import { useSession } from '../../session/SessionProvider';
 import { KitArt } from '../hud/KitArt';
 import { Button, Chip, Loading, Notice, PixelCharacter, ProgressBar } from '../kit';
 import { COMPLETE_RATE, formatTime, lectureStatus, percent, tasksForLecture } from './format';
-import { createYouTubePlayer, isMockVideo, MockPlayer, type LecturePlayer, type PlayerState } from './player';
+import { createYouTubePlayer, isMockVideo, localVideoUrl, MockPlayer, NativeVideoPlayer, type LecturePlayer, type PlayerState } from './player';
 import { WatchTracker } from './watchTracker';
 
 // 강의 재생 화면. 영상 아래에 수강률 막대와 "실제로 본 부분만 들어가요" 설명을 둔다.
@@ -125,7 +125,7 @@ export function LecturePlayerView({ lectureId, flushRef, onBack, onGuideToExam }
                     <div className="min-w-0 flex-1 text-[15px] leading-snug">
                         <p className="font-pixel text-[16px] font-bold">수강 완료!</p>
                         <p>
-                            이 강의를 다 들었어요.
+                            이 강의의 80% 이상을 시청했어요.
                             {linkedText && <> 이제 {linkedText} 시험을 볼 수 있어요.</>}
                         </p>
                     </div>
@@ -158,7 +158,7 @@ export function LecturePlayerView({ lectureId, flushRef, onBack, onGuideToExam }
                     </div>
                 )}
                 {!completed && linkedText && (
-                    <p className="mt-1 text-[14px] leading-snug text-ink-soft">이 강의를 다 들으면 {linkedText} 시험을 볼 수 있어요.</p>
+                    <p className="mt-1 text-[14px] leading-snug text-ink-soft">이 강의의 80% 이상을 시청하면 {linkedText} 시험을 볼 수 있어요.</p>
                 )}
             </section>
         </div>
@@ -182,6 +182,7 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
     onResultRef.current = onResult;
 
     const mock = isMockVideo(detail.youtube_video_id);
+    const videoUrl = localVideoUrl(detail.youtube_video_id);
     // 거의 끝까지 본 강의는 처음부터 다시 튼다
     const start = detail.last_position_sec >= detail.duration_sec - 5 ? 0 : detail.last_position_sec;
 
@@ -196,11 +197,17 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
         let host: HTMLDivElement | null = null;
         let disposed = false;
 
+        const stop = (p: LecturePlayer) => {
+            if (p.getState() === 'seeking') tracker.interrupt();
+            else tracker.stop(p.getTime());
+        };
+
         const attach = (p: LecturePlayer) => {
             current = p;
             setPlayer(p);
             p.onStateChange((s) => {
-                if (isActive(s)) tracker.sample(p.getTime());
+                if (s === 'seeking') tracker.interrupt();
+                else if (isActive(s)) tracker.sample(p.getTime());
                 else if (s === 'paused' || s === 'ended') {
                     // 일시정지, 끝까지 봄: 구간을 닫고 바로 보고한다
                     const t = p.getTime();
@@ -214,6 +221,18 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
         setPlayer(null);
         if (mock) {
             attach(new MockPlayer(detail.duration_sec, start));
+        } else if (videoUrl) {
+            const video = document.createElement('video');
+            video.controls = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+            video.className = 'absolute inset-0 h-full w-full';
+            video.setAttribute('aria-label', detail.title);
+            attach(new NativeVideoPlayer(video, start, () => {
+                if (!disposed) setLoadError('강의 영상을 재생할 수 없어요. 잠시 뒤 다시 시도해 주세요.');
+            }));
+            video.src = videoUrl;
+            stageRef.current?.appendChild(video);
         } else {
             // YouTube API가 이 div를 iframe으로 바꿔 끼운다. React가 그리지 않는 div를 따로 만들어 넘긴다
             host = document.createElement('div');
@@ -266,7 +285,7 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
         const flush = async () => {
             if (!current) return;
             const t = current.getTime();
-            tracker.stop(t);
+            stop(current);
             current.pause();
             await tracker.report(t);
         };
@@ -283,7 +302,7 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
             if (current) {
                 // 마지막 보고 없이 사라지는 경우(로그아웃 등)에도 본 구간을 잃지 않게 보내 둔다.
                 // 이때는 토큰이 이미 지워졌을 수 있어서 공용 클라이언트가 아니라 기억해 둔 토큰으로 보낸다
-                tracker.stop(current.getTime());
+                stop(current);
                 flushNow();
                 current.destroy();
             }

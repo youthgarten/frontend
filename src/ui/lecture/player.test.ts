@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createYouTubePlayer, MockPlayer, type PlayerState } from './player';
+import { createYouTubePlayer, localVideoUrl, MockPlayer, NativeVideoPlayer, type PlayerState } from './player';
 
 // 영상 재생기 어댑터. 수강률은 여기서 읽은 재생 위치와 상태로 정해진다.
 // DOM 없이 돌린다. window에는 타이머와 가짜 YT만 둔다.
@@ -87,6 +87,51 @@ describe('MockPlayer', () => {
         p.destroy();
         vi.advanceTimersByTime(20_000);
         expect(fn).not.toHaveBeenCalled();
+    });
+});
+
+describe('NativeVideoPlayer', () => {
+    it('resolves a catalog key only to the same-origin media folder', () => {
+        expect(localVideoUrl('local:trade-delay-v1')).toBe('/lecture-media/trade-delay-v1.mp4');
+        expect(localVideoUrl('local:../secret')).toBeNull();
+        expect(localVideoUrl('local:trade-delay-v1\n')).toBeNull();
+        expect(localVideoUrl('dQw4w9WgXcQ')).toBeNull();
+    });
+
+    it('resumes after metadata and distinguishes playback, seeking, buffering, and cleanup', () => {
+        const element = Object.assign(new EventTarget(), {
+            currentTime: 0, duration: 697.3, ended: false, paused: true, seeking: false, readyState: 4,
+            pause: vi.fn(), remove: vi.fn(), removeAttribute: vi.fn(), load: vi.fn(),
+        });
+        const fail = vi.fn();
+        const player = new NativeVideoPlayer(element as unknown as HTMLVideoElement, 12, fail);
+        const states: PlayerState[] = [];
+        player.onStateChange((state) => states.push(state));
+        const fire = (name: string) => element.dispatchEvent(new Event(name));
+
+        fire('loadedmetadata');
+        expect(element.currentTime).toBe(12);
+        element.paused = false;
+        fire('playing');
+        element.seeking = true;
+        expect(player.getState()).toBe('seeking');
+        fire('seeking');
+        fire('waiting');
+        element.seeking = false;
+        fire('seeked');
+        fire('waiting');
+        fire('playing');
+        element.paused = true;
+        fire('pause');
+        expect(states).toEqual(['playing', 'seeking', 'playing', 'buffering', 'playing', 'paused']);
+
+        fire('error');
+        expect(fail).toHaveBeenCalledOnce();
+        player.destroy();
+        player.destroy();
+        fire('error');
+        expect(fail).toHaveBeenCalledOnce();
+        expect(element.remove).toHaveBeenCalledOnce();
     });
 });
 

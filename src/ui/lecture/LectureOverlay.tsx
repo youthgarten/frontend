@@ -46,7 +46,7 @@ export function LectureOverlay({ onClose, initialLectureId }: { onClose: () => v
             title="강의실"
             description={
                 playing === null
-                    ? '강의를 골라 들어요. 강의를 다 들으면 그 강의와 연결된 시험을 볼 수 있어요.'
+                    ? '강의를 골라 들어요. 80% 이상 시청하면 연결된 시험을 볼 수 있어요.'
                     : '영상을 보는 동안 본 부분이 자동으로 저장돼요.'
             }
             onClose={handleClose}

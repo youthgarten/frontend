@@ -1,8 +1,9 @@
 // 영상 재생기를 하나의 모양으로 감싼다. 강의 화면은 이 인터페이스만 알고, 실제 재생기가 무엇인지 모른다.
 // - 흉내 플레이어: youtube_video_id가 'mock:'으로 시작할 때. 영상 없이 1초에 1초씩 위치가 흐른다
-// - YouTube 플레이어: 그 밖의 경우. YouTube IFrame Player API를 쓴다
+// - 로컬 플레이어: local: 키에 연결된 MP4를 같은 출처에서 재생한다
+// - YouTube 플레이어: YouTube IFrame Player API를 쓴다
 
-export type PlayerState = 'unstarted' | 'playing' | 'paused' | 'buffering' | 'ended';
+export type PlayerState = 'unstarted' | 'playing' | 'paused' | 'buffering' | 'seeking' | 'ended';
 
 export interface LecturePlayer {
     play(): void;
@@ -18,6 +19,64 @@ export interface LecturePlayer {
 }
 
 export const isMockVideo = (videoId: string) => videoId.startsWith('mock:');
+
+export function localVideoUrl(videoId: string): string | null {
+    const key = /^local:([a-z0-9][a-z0-9-]{0,13})$/.exec(videoId)?.[1];
+    return key && videoId === `local:${key}` ? `/lecture-media/${key}.mp4` : null;
+}
+
+export class NativeVideoPlayer implements LecturePlayer {
+    private readonly events = new AbortController();
+    private readonly listeners = new Set<(s: PlayerState) => void>();
+    private state: PlayerState = 'unstarted';
+
+    constructor(private readonly video: HTMLVideoElement, start: number, onError: () => void) {
+        const { signal } = this.events;
+        video.addEventListener('loadedmetadata', () => {
+            if (start > 0) this.seek(start);
+        }, { signal, once: true });
+        video.addEventListener('playing', () => this.set('playing'), { signal });
+        video.addEventListener('waiting', () => this.set('buffering'), { signal });
+        video.addEventListener('seeking', () => this.set('seeking'), { signal });
+        video.addEventListener('seeked', () => {
+            this.set(video.ended ? 'ended' : video.paused ? 'paused' : video.readyState < 3 ? 'buffering' : 'playing');
+        }, { signal });
+        video.addEventListener('pause', () => this.set(video.ended ? 'ended' : 'paused'), { signal });
+        video.addEventListener('ended', () => this.set('ended'), { signal });
+        video.addEventListener('error', () => {
+            this.set('paused');
+            onError();
+        }, { signal });
+    }
+
+    play() { void this.video.play().catch(() => {}); }
+    pause() { this.video.pause(); }
+    getTime() { return this.video.currentTime; }
+    getState(): PlayerState { return this.video.seeking ? 'seeking' : this.state; }
+    seek(sec: number) { this.video.currentTime = clamp(sec, 0, this.video.duration); }
+
+    onStateChange(fn: (s: PlayerState) => void) {
+        this.listeners.add(fn);
+        return () => { this.listeners.delete(fn); };
+    }
+
+    destroy() {
+        if (this.events.signal.aborted) return;
+        this.events.abort();
+        this.listeners.clear();
+        this.video.pause();
+        this.video.removeAttribute('src');
+        this.video.load();
+        this.video.remove();
+    }
+
+    private set(next: PlayerState) {
+        const state = this.video.seeking ? 'seeking' : next;
+        if (state === this.state) return;
+        this.state = state;
+        for (const listener of this.listeners) listener(state);
+    }
+}
 
 // ── 흉내 플레이어 ──
 
