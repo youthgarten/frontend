@@ -84,7 +84,7 @@ export interface TaskDef {
 export const JOBS: JobDef[] = [{ id: 1, name: '무역 사무' }];
 
 export const LECTURES: LectureDef[] = [
-    { id: 1, job_id: 1, title: 'AI로 영문 비즈니스 메일 쓰고 검토하기', youtube_video_id: 'aqz-KE-bpKQ', duration_sec: 635, sort_order: 1 },
+    { id: 1, job_id: 1, title: 'AI로 영문 비즈니스 메일 쓰고 검토하기', youtube_video_id: 'c9pBqlOSnx4', duration_sec: 697, sort_order: 1 },
     { id: 2, job_id: 1, title: 'AI로 견적 조건 정리하고 견적서 만들기', youtube_video_id: 'mock:lecture-2', duration_sec: 720, sort_order: 2 },
     { id: 3, job_id: 1, title: 'AI로 신용장 조건 검토하기', youtube_video_id: 'mock:lecture-3', duration_sec: 540, sort_order: 3 },
     { id: 4, job_id: 1, title: 'AI로 선적 서류 대조하고 오류 찾기', youtube_video_id: 'mock:lecture-4', duration_sec: 600, sort_order: 4 },

@@ -190,6 +190,19 @@ describe('createYouTubePlayer', () => {
         await failed;
     });
 
+    it('준비가 끝난 뒤의 재생 오류도 강의 화면에 알린다', async () => {
+        const { created } = setup();
+        const onPlaybackError = vi.fn();
+        const promise = createYouTubePlayer(HOST, 'video', 0, new AbortController().signal, onPlaybackError);
+        await vi.advanceTimersByTimeAsync(0);
+        const { events } = created[0].options;
+        events.onReady();
+        const player = await promise;
+        events.onError({ data: 153 });
+        expect(onPlaybackError).toHaveBeenCalledOnce();
+        player.destroy();
+    });
+
     it('끝내 준비되지 않으면 시간 초과로 실패하고 만들던 플레이어를 치운다', async () => {
         const { created } = setup();
         const promise = createYouTubePlayer(HOST, 'abc123', 0, new AbortController().signal);

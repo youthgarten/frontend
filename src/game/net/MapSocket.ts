@@ -1,5 +1,6 @@
 import { getAccessToken, isConnectionUnstable, notifySessionLost, refreshAccessToken } from '../../api';
 import type { Dir, MapClientMessage, MapPlayer, MapServerMessage } from '../../api';
+import { publicBackendOrigin } from '../../backendOrigin';
 import { emit } from '../../events';
 
 // 멀티플레이 WebSocket 클라이언트 (API 명세서 8절).
@@ -41,6 +42,8 @@ interface MoveState {
 }
 
 export function mapSocketUrl(loc: Location = window.location) {
+    const backend = publicBackendOrigin(import.meta.env.VITE_PUBLIC_BACKEND_ORIGIN);
+    if (backend) return `wss://${new URL(backend).host}${MAP_WS_PATH}`;
     const scheme = loc.protocol === 'https:' ? 'wss' : 'ws';
     return `${scheme}://${loc.host}${MAP_WS_PATH}`;
 }

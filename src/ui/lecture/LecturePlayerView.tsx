@@ -178,13 +178,21 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
     const [player, setPlayer] = useState<LecturePlayer | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [attempt, setAttempt] = useState(0);
+    const [useMp4, setUseMp4] = useState(false);
     const onResultRef = useRef(onResult);
     onResultRef.current = onResult;
 
     const mock = isMockVideo(detail.youtube_video_id);
-    const videoUrl = localVideoUrl(detail.youtube_video_id);
+    const backupUrl = detail.youtube_video_id === 'c9pBqlOSnx4' ? localVideoUrl('local:trade-delay-v1') : null;
+    const videoUrl = localVideoUrl(detail.youtube_video_id) ?? (useMp4 ? backupUrl : null);
     // 거의 끝까지 본 강의는 처음부터 다시 튼다
     const start = detail.last_position_sec >= detail.duration_sec - 5 ? 0 : detail.last_position_sec;
+    const resume = useRef(start);
+
+    const selectMp4 = (position: number) => {
+        resume.current = position;
+        setUseMp4(true);
+    };
 
     useEffect(() => {
         const tracker = new WatchTracker(
@@ -228,7 +236,7 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
             video.preload = 'metadata';
             video.className = 'absolute inset-0 h-full w-full';
             video.setAttribute('aria-label', detail.title);
-            attach(new NativeVideoPlayer(video, start, () => {
+            attach(new NativeVideoPlayer(video, resume.current, () => {
                 if (!disposed) setLoadError('강의 영상을 재생할 수 없어요. 잠시 뒤 다시 시도해 주세요.');
             }));
             video.src = videoUrl;
@@ -237,13 +245,21 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
             // YouTube API가 이 div를 iframe으로 바꿔 끼운다. React가 그리지 않는 div를 따로 만들어 넘긴다
             host = document.createElement('div');
             stageRef.current?.appendChild(host);
-            createYouTubePlayer(host, detail.youtube_video_id, start, abort.signal)
+            createYouTubePlayer(host, detail.youtube_video_id, resume.current, abort.signal, () => {
+                if (disposed) return;
+                if (backupUrl) selectMp4(current?.getTime() ?? resume.current);
+                else setLoadError('이 영상을 재생할 수 없어요. 잠시 뒤 다시 시도해 주세요.');
+            })
                 .then((p) => {
                     if (disposed) p.destroy();
                     else attach(p);
                 })
                 .catch((e: Error) => {
                     if (disposed) return;
+                    if (backupUrl) {
+                        selectMp4(resume.current);
+                        return;
+                    }
                     setLoadError(
                         e.message === 'YOUTUBE_VIDEO_ERROR'
                             ? '이 영상을 재생할 수 없어요. 잠시 뒤 다시 시도해 주세요.'
@@ -293,7 +309,6 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
 
         return () => {
             disposed = true;
-            abort.abort();
             window.clearInterval(sampler);
             window.clearInterval(reporter);
             document.removeEventListener('visibilitychange', onHide);
@@ -306,11 +321,12 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
                 flushNow();
                 current.destroy();
             }
+            abort.abort();
             host?.remove();
         };
-        // detail은 key로 묶여 있어서 바뀌지 않는다. 다시 시도(attempt)할 때만 새로 만든다
+        // detail은 key로 묶여 있어서 바뀌지 않는다. 다시 시도하거나 재생 방식을 바꿀 때 새로 만든다
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [attempt]);
+    }, [attempt, useMp4]);
 
     return (
         <div className="mx-auto w-full max-w-[min(100%,calc(52vh*16/9))]">
@@ -329,6 +345,11 @@ function VideoStage({ detail, flushRef, onResult, calm }: {
                 )}
                 {mock && player instanceof MockPlayer && <MockScreen player={player} duration={detail.duration_sec} calm={calm} />}
             </div>
+            {backupUrl && !useMp4 && (
+                <div className="mt-2">
+                    <Button size="sm" onClick={() => selectMp4(player?.getTime() ?? resume.current)}>같은 영상 MP4로 재생</Button>
+                </div>
+            )}
             {start > 0 && (
                 <p className="mt-2 text-[14px] text-ink-soft">지난번에 본 {formatTime(start)}부터 이어서 재생해요.</p>
             )}
