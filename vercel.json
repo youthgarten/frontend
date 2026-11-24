@@ -1,6 +1,7 @@
 {
+  "buildCommand": "VITE_PUBLIC_BACKEND_ORIGIN=$(node scripts/vercel-backend-origin.mjs) && export VITE_PUBLIC_BACKEND_ORIGIN && npm run build",
   "rewrites": [
-    { "source": "/api/v1/:path*", "destination": "https://desktop-mr7iih9.tailf39937.ts.net/api/v1/:path*" },
+    { "source": "/api/v1/:path*", "destination": "https://aiworker.tailf39937.ts.net:10000/api/v1/:path*" },
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
